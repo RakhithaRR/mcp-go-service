@@ -1,0 +1,19 @@
+{
+    "name": "testTool",
+    "description": "A test tool",
+    "required": [],
+    "inputSchema": {
+        "type": "object",
+        "contentType": "application/json",
+        "properties": {
+            "query_input1": {
+                "type": "string",
+                "description": "The first input"
+            },
+            "header_input2": {
+                "type": "string",
+                "description": "The second input"
+            }
+        }
+    }
+}
