@@ -14,6 +14,10 @@ var logger = service.GetLogger()
 
 type contextKey string
 
+func (c contextKey) String() string {
+	return string(c)
+}
+
 func serveRequest(c *gin.Context) {
 	var mcpRequest mcp.MCPRequest
 
@@ -26,25 +30,25 @@ func serveRequest(c *gin.Context) {
 		logger.Error("Tool name is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tool name is required"})
 		return
-	} else if mcpRequest.APIName == "" {
+	} else if mcpRequest.API.APIName == "" {
 		logger.Warn("API name is not proided")
-	} else if mcpRequest.Endpoint == "" {
+	} else if mcpRequest.API.Endpoint == "" {
 		logger.Error("API endpoint is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "API endpoint is required"})
 		return
-	} else if mcpRequest.Context == "" {
+	} else if mcpRequest.API.Context == "" {
 		logger.Error("API context is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "API context is required"})
 		return
-	} else if mcpRequest.Version == "" {
+	} else if mcpRequest.API.Version == "" {
 		logger.Error("API version is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "API version is required"})
 		return
-	} else if mcpRequest.Path == "" {
+	} else if mcpRequest.API.Path == "" {
 		logger.Error("Resource path is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Resource path is required"})
 		return
-	} else if mcpRequest.Verb == "" {
+	} else if mcpRequest.API.Verb == "" {
 		logger.Error("HTTP verb is required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "HTTP verb is required"})
 		return
@@ -52,13 +56,19 @@ func serveRequest(c *gin.Context) {
 		logger.Error("Arguments are required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arguments are required"})
 		return
+	} else if mcpRequest.Schema == "" {
+		logger.Warn("Input schema is not provided")
 	}
 
 	// Set logging context
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, contextKey("toolName"), mcpRequest.ToolName)
-	if mcpRequest.APIName != "" {
-		ctx = context.WithValue(ctx, contextKey("apiName"), mcpRequest.APIName)
+	ctx = context.WithValue(ctx, contextKey("toolName").String(), mcpRequest.ToolName)
+	if mcpRequest.API.APIName != "" {
+		ctx = context.WithValue(ctx, contextKey("apiName").String(), mcpRequest.API.APIName)
+	}
+
+	if mcpRequest.API.Auth == "" {
+		logger.WarnContext(ctx, "Authentication is not provided for the underlying API. Assuming no authentication is required.")
 	}
 
 	// Call the underlying API

@@ -14,7 +14,7 @@ func transformMCPRequest(mcpRequest *MCPRequest) (*TransformedRequest, error) {
 		Headers: make(map[string]string),
 	}
 
-	method, err := processHTTPMethod(mcpRequest.Verb)
+	method, err := processHTTPMethod(mcpRequest.API.Verb)
 	if err != nil {
 		logger.Error("Failed to process HTTP method", "error", err)
 		return nil, err
@@ -87,10 +87,14 @@ func processEndpoint(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (stri
 		return "", err
 	}
 
-	endpoint := mcpRequest.Endpoint
+	endpoint := mcpRequest.API.Endpoint
 	transformedEp := ""
 	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
-		transformedEp = fmt.Sprintf("%s/%s/%s/%s", endpoint, mcpRequest.Context, mcpRequest.Version, mcpRequest.Path)
+		sanitizedEp := sanitizeStringSlashes(endpoint)
+		sainitizedContext := sanitizeStringSlashes(mcpRequest.API.Context)
+		sanitizedVersion := sanitizeStringSlashes(mcpRequest.API.Version)
+		sanitizedPath := sanitizeStringSlashes(mcpRequest.API.Path)
+		transformedEp = fmt.Sprintf("%s/%s/%s/%s", sanitizedEp, sainitizedContext, sanitizedVersion, sanitizedPath)
 		// Process path parameters
 		transformedEp = processPathParameters(args, schemaMapping, transformedEp)
 		// Process query parameters
@@ -170,6 +174,13 @@ func processHeaderParameters(mcpRequest *MCPRequest, schemaMapping *SchemaMappin
 			headers[param] = fmt.Sprintf("%v", paramValue)
 		}
 	}
+	// Add authentication header if provided
+	if mcpRequest.API.Auth != "" {
+		k, v, found := strings.Cut(mcpRequest.API.Auth, ":")
+		if found {
+			headers[k] = v
+		}
+	}
 	return headers, nil
 }
 
@@ -213,4 +224,9 @@ func parseArgs(mcpRequest *MCPRequest) (map[string]any, error) {
 		}
 	}
 	return args, nil
+}
+
+func sanitizeStringSlashes(input string) string {
+	// Remove any trailing or preceding slashes from the input
+	return strings.TrimSuffix(strings.TrimPrefix(input, "/"), "/")
 }

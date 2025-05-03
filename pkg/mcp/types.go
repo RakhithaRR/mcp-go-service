@@ -3,15 +3,20 @@ package mcp
 import "bytes"
 
 type MCPRequest struct {
-	ToolName  string `json:"tool_name"`
-	APIName   string `json:"api_name"`
-	Endpoint  string `json:"endpoint"`
-	Context   string `json:"context"`
-	Version   string `json:"version"`
-	Path      string `json:"path"`
-	Verb      string `json:"verb"`
-	Arguments string `json:"arguments,omitempty"`
-	Schema    string `json:"schema,omitempty"`
+	ToolName  string  `json:"tool_name"`
+	API       APIInfo `json:"api"`
+	Arguments string  `json:"arguments,omitempty"`
+	Schema    string  `json:"schema,omitempty"`
+}
+
+type APIInfo struct {
+	APIName  string `json:"api_name"`
+	Endpoint string `json:"endpoint"`
+	Context  string `json:"context"`
+	Version  string `json:"version"`
+	Path     string `json:"path"`
+	Verb     string `json:"verb"`
+	Auth     string `json:"auth,omitempty"`
 }
 
 type TransformedRequest struct {
