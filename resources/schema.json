@@ -1,7 +1,7 @@
 {
     "name": "testTool",
     "description": "A test tool",
-    "required": [],
+    "required": ["query_input1", "header_input2"],
     "inputSchema": {
         "type": "object",
         "contentType": "application/json",
@@ -13,6 +13,38 @@
             "header_input2": {
                 "type": "string",
                 "description": "The second input"
+            },
+            "requestBody": {
+                "type": "object",
+                "description": "The request body",
+                "required": [
+                    "address",
+                    "pizzaType",
+                    "quantity"
+                ],
+                "properties": {
+                    "customerName": {
+                        "type": "string"
+                    },
+                    "delivered": {
+                        "type": "boolean"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "pizzaType": {
+                        "type": "string"
+                    },
+                    "creditCardNumber": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "number"
+                    },
+                    "orderId": {
+                        "type": "string"
+                    }
+                }
             }
         }
     }

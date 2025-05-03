@@ -3,6 +3,7 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -98,7 +99,10 @@ func processEndpoint(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (stri
 		// Process path parameters
 		transformedEp = processPathParameters(args, schemaMapping, transformedEp)
 		// Process query parameters
-		queryParams := processQueryParameters(args, schemaMapping)
+		queryParams, err := processQueryParameters(args, schemaMapping)
+		if err != nil {
+			return "", err
+		}
 		if queryParams != "" {
 			transformedEp += queryParams
 		}
@@ -109,26 +113,30 @@ func processEndpoint(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (stri
 
 // processQueryParameters generates a query string from the provided arguments and schema mapping.
 // It URL-encodes parameter names and values and appends them to the query string.
-// Returns the constructed query string.
-func processQueryParameters(args map[string]any, schemaMapping *SchemaMapping) string {
+// Returns the constructed query string or an error if required parameters are missing.
+func processQueryParameters(args map[string]any, schemaMapping *SchemaMapping) (string, error) {
 	queryParams := schemaMapping.QueryParameters
 	if len(queryParams) > 0 {
 		queryString := "?"
 		for _, param := range queryParams {
-			paramValue := args[param]
-			if paramValue == nil {
-				logger.Warn("Query parameter value is not available", "parameter", param)
+			paramName := param.Name
+			paramValue := args[paramName]
+			if param.Required && paramValue == nil {
+				logger.Error("Required query parameter value is not available", "parameter", paramName)
+				return "", fmt.Errorf("required query parameter %s is missing", paramName)
+			} else if paramValue == nil {
+				logger.Warn("Query parameter value is not available", "parameter", paramName)
 				continue
 			}
 			// URL encode the parameter name and value
-			urlEncodedParam := url.QueryEscape(fmt.Sprintf("%v", param))
+			urlEncodedParam := url.QueryEscape(fmt.Sprintf("%v", paramName))
 			urlEncodedValue := url.QueryEscape(fmt.Sprintf("%v", paramValue))
 			queryString += fmt.Sprintf("%s=%s&", urlEncodedParam, urlEncodedValue)
 		}
 		queryString = strings.TrimSuffix(queryString, "&")
-		return queryString
+		return queryString, nil
 	}
-	return ""
+	return "", nil
 }
 
 // processPathParameters replaces placeholders in the URL with actual values from the arguments.
@@ -166,12 +174,16 @@ func processHeaderParameters(mcpRequest *MCPRequest, schemaMapping *SchemaMappin
 	headerParams := schemaMapping.HeaderParameters
 	if len(headerParams) > 0 {
 		for _, param := range headerParams {
-			paramValue := args[param]
-			if paramValue == nil {
-				logger.Warn("Header parameter value is not available", "parameter", param)
+			paramName := param.Name
+			paramValue := args[paramName]
+			if param.Required && paramValue == nil {
+				logger.Error("Required query parameter value is not available", "parameter", paramName)
+				return nil, fmt.Errorf("required query parameter %s is missing", paramName)
+			} else if paramValue == nil {
+				logger.Warn("Query parameter value is not available", "parameter", paramName)
 				continue
 			}
-			headers[param] = fmt.Sprintf("%v", paramValue)
+			headers[paramName] = fmt.Sprintf("%v", paramValue)
 		}
 	}
 	// Add authentication header if provided
@@ -194,24 +206,35 @@ func processRequestBody(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (*
 		return nil, err
 	}
 
-	body := args["requestBody"].(string)
-	if body == "" {
-		logger.Warn("Request body is empty")
-		return nil, nil
-	}
-	if strings.HasPrefix(body, "{") && strings.HasSuffix(body, "}") {
+	var body map[string]any
+	if args["requestBody"] != nil {
+		body = args["requestBody"].(map[string]any)
 		if contentType == "application/json" {
-			byteArray := []byte(body)
+			jsonString, err := json.Marshal(body)
+			if err != nil {
+				logger.Error("Failed to marshal request body", "error", err)
+				return nil, err
+			}
+			byteArray := []byte(jsonString)
+			bodyReader := bytes.NewReader(byteArray)
+			return bodyReader, nil
+		} else if contentType == "application/xml" {
+			//todo: Need to figure out how to handle the root element name
+			root := XMLElement{XMLName: xml.Name{Local: "Body"}, Children: mapToXMLElements(body)}
+			xmlString, err := xml.MarshalIndent(root, "", "  ")
+			if err != nil {
+				logger.Error("Failed to marshal request body", "error", err)
+				return nil, err
+			}
+			byteArray := []byte(xmlString)
 			bodyReader := bytes.NewReader(byteArray)
 			return bodyReader, nil
 		} else {
-			logger.Error("Unsupported content type for request body", "contentType", contentType)
-			return nil, fmt.Errorf("unsupported content type for request body: %s", contentType)
+			logger.Error("Unsupported content type", "contentType", contentType)
+			return nil, fmt.Errorf("unsupported content type: %s", contentType)
 		}
-	} else {
-		logger.Error("Invalid request body format")
-		return nil, fmt.Errorf("invalid request body format")
 	}
+	return nil, nil
 }
 
 func parseArgs(mcpRequest *MCPRequest) (map[string]any, error) {

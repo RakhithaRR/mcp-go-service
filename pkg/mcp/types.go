@@ -1,6 +1,9 @@
 package mcp
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/xml"
+)
 
 type MCPRequest struct {
 	ToolName  string  `json:"tool_name"`
@@ -28,10 +31,15 @@ type TransformedRequest struct {
 
 type SchemaMapping struct {
 	PathParameters   []string `json:"pathParameters"`
-	QueryParameters  []string `json:"queryParameters"`
-	HeaderParameters []string `json:"headerParameters"`
+	QueryParameters  []Param  `json:"queryParameters"`
+	HeaderParameters []Param  `json:"headerParameters"`
 	HasBody          bool     `json:"hasBody"`
 	ContentType      string   `json:"contentType,omitempty"`
+}
+
+type Param struct {
+	Name     string `json:"name"`
+	Required bool   `json:"required"`
 }
 
 type MCPSchema struct {
@@ -46,4 +54,10 @@ type MCPInputSchema struct {
 	Properties     map[string]any `json:"properties"`
 	RequiredFields []string       `json:"requiredFields,omitempty"`
 	ContentType    string         `json:"contentType,omitempty"`
+}
+
+type XMLElement struct {
+	XMLName  xml.Name
+	Content  string       `xml:",chardata"`
+	Children []XMLElement `xml:",any"`
 }
