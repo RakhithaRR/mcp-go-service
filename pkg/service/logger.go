@@ -11,7 +11,7 @@ type LogHandler struct {
 	slog.Handler
 }
 
-var lock = &sync.Mutex{}
+var syncOnceLogger sync.Once
 
 var logger *slog.Logger
 
@@ -27,17 +27,13 @@ func (l *LogHandler) Handle(ctx context.Context, r slog.Record) error {
 }
 
 func GetLogger() *slog.Logger {
-	if logger == nil {
-		lock.Lock()
-		defer lock.Unlock()
-
+	syncOnceLogger.Do(func() {
 		if logger == nil {
 			attributes := []slog.Attr{}
 			baseHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: false}).WithAttrs(attributes)
 			customHandler := &LogHandler{Handler: baseHandler}
-			return slog.New(customHandler)
+			logger = slog.New(customHandler)
 		}
-	}
-
+	})
 	return logger
 }
