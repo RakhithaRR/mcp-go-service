@@ -194,8 +194,14 @@ func processHeaderParameters(mcpRequest *MCPRequest, schemaMapping *SchemaMappin
 	if mcpRequest.API.Auth != "" {
 		k, v, found := strings.Cut(mcpRequest.API.Auth, ":")
 		if found {
-			headers[k] = v
+			headers[k] = strings.TrimSpace(v)
 		}
+	}
+	// Add content type header
+	if schemaMapping.ContentType != "" {
+		headers[ContentType] = schemaMapping.ContentType
+	} else {
+		headers[ContentType] = ContentTypeJSON
 	}
 	return headers, nil
 }
@@ -213,7 +219,7 @@ func processRequestBody(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (*
 	var body map[string]any
 	if args["requestBody"] != nil {
 		body = args["requestBody"].(map[string]any)
-		if contentType == "application/json" {
+		if contentType == ContentTypeJSON {
 			jsonString, err := json.Marshal(body)
 			if err != nil {
 				logger.Error("Failed to marshal request body", "error", err)
@@ -222,7 +228,7 @@ func processRequestBody(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (*
 			byteArray := []byte(jsonString)
 			bodyReader := bytes.NewReader(byteArray)
 			return bodyReader, nil
-		} else if contentType == "application/xml" {
+		} else if contentType == ContentTypeXML {
 			//todo: Need to figure out how to handle the root element name
 			root := XMLElement{XMLName: xml.Name{Local: "Body"}, Children: mapToXMLElements(body)}
 			xmlString, err := xml.MarshalIndent(root, "", "  ")

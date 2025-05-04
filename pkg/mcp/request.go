@@ -34,7 +34,7 @@ func CallUnderlyingAPI(ctx context.Context, payload *MCPRequest) (string, int, e
 		return "", http.StatusInternalServerError, err
 	}
 	response := string(body)
-	if strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
+	if strings.Contains(resp.Header.Get(ContentType), ContentTypeJSON) {
 		response, err = processJsonResponse(response)
 		if err != nil {
 			logger.ErrorContext(ctx, "Failed to process JSON response", "error", err)

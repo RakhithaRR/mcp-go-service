@@ -26,7 +26,7 @@ func processSchema(schema string) (*SchemaMapping, error) {
 	if inputSchema.ContentType != "" {
 		schemaMapping.ContentType = inputSchema.ContentType
 	} else {
-		schemaMapping.ContentType = "application/json"
+		schemaMapping.ContentType = ContentTypeJSON
 	}
 
 	return schemaMapping, nil
