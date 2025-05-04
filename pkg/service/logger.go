@@ -11,16 +11,23 @@ type LogHandler struct {
 	slog.Handler
 }
 
+type contextKey string
+
+const (
+	ToolNameKey contextKey = "toolName"
+	ApiNameKey  contextKey = "apiName"
+)
+
 var syncOnceLogger sync.Once
 
 var logger *slog.Logger
 
 // Custom log handler to add toolName and apiName attributes to each log
 func (l *LogHandler) Handle(ctx context.Context, r slog.Record) error {
-	if toolName, ok := ctx.Value("toolName").(string); ok {
+	if toolName, ok := ctx.Value(ToolNameKey).(string); ok {
 		r.AddAttrs(slog.String("toolName", toolName))
 	}
-	if apiName, ok := ctx.Value("apiName").(string); ok {
+	if apiName, ok := ctx.Value(ApiNameKey).(string); ok {
 		r.AddAttrs(slog.String("apiName", apiName))
 	}
 	return l.Handler.Handle(ctx, r)

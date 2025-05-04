@@ -12,12 +12,6 @@ import (
 
 var logger = service.GetLogger()
 
-type contextKey string
-
-func (c contextKey) String() string {
-	return string(c)
-}
-
 func serveRequest(c *gin.Context) {
 	var mcpRequest mcp.MCPRequest
 
@@ -62,9 +56,10 @@ func serveRequest(c *gin.Context) {
 
 	// Set logging context
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, contextKey("toolName").String(), mcpRequest.ToolName)
+
+	ctx = context.WithValue(ctx, service.ToolNameKey, mcpRequest.ToolName)
 	if mcpRequest.API.APIName != "" {
-		ctx = context.WithValue(ctx, contextKey("apiName").String(), mcpRequest.API.APIName)
+		ctx = context.WithValue(ctx, service.ApiNameKey, mcpRequest.API.APIName)
 	}
 
 	if mcpRequest.API.Auth == "" {
