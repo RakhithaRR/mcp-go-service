@@ -97,7 +97,11 @@ func processEndpoint(mcpRequest *MCPRequest, schemaMapping *SchemaMapping) (stri
 		sanitizedPath := sanitizeStringSlashes(mcpRequest.API.Path)
 		transformedEp = fmt.Sprintf("%s/%s/%s/%s", sanitizedEp, sainitizedContext, sanitizedVersion, sanitizedPath)
 		// Process path parameters
-		transformedEp = processPathParameters(args, schemaMapping, transformedEp)
+		transformedEp, err = processPathParameters(args, schemaMapping, transformedEp)
+		if err != nil {
+			logger.Error("Failed to process path parameters", "error", err)
+			return "", err
+		}
 		// Process query parameters
 		queryParams, err := processQueryParameters(args, schemaMapping)
 		if err != nil {
@@ -142,15 +146,15 @@ func processQueryParameters(args map[string]any, schemaMapping *SchemaMapping) (
 // processPathParameters replaces placeholders in the URL with actual values from the arguments.
 // It URL-encodes parameter names and values before substitution.
 // Returns the transformed URL with path parameters replaced.
-func processPathParameters(args map[string]any, schemaMapping *SchemaMapping, unProcessedUrl string) string {
+func processPathParameters(args map[string]any, schemaMapping *SchemaMapping, unProcessedUrl string) (string, error) {
 	pathParams := schemaMapping.PathParameters
 	transformedUrl := unProcessedUrl
 	if len(pathParams) > 0 {
 		for _, param := range pathParams {
 			paramValue := args[param]
 			if paramValue == nil {
-				logger.Warn("Path parameter value is not available", "parameter", param)
-				continue
+				logger.Error("Path parameter value is not available", "parameter", param)
+				return "", fmt.Errorf("path parameter %s is missing", param)
 			}
 			// URL encode the parameter name and value
 			urlEncodedParam := url.QueryEscape(fmt.Sprintf("%v", param))
@@ -159,7 +163,7 @@ func processPathParameters(args map[string]any, schemaMapping *SchemaMapping, un
 			transformedUrl = processedUrl
 		}
 	}
-	return transformedUrl
+	return transformedUrl, nil
 }
 
 // processHeaderParameters generates a map of header parameters from the provided arguments and schema mapping.
