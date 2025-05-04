@@ -85,7 +85,7 @@ func main() {
 	router := service.GetRouter()
 	router.POST("/mcp", serveRequest)
 	logger.Info("Service started on localhost:8080...")
-	err := router.Run("localhost:8080")
+	err := router.Run("0.0.0.0:8080")
 	if err != nil {
 		logger.Error("Failed to start the service", "error", err)
 	}
