@@ -1,14 +1,18 @@
 package mcp
 
 import (
+	"crypto/tls"
 	"fmt"
+	"mcp-server/pkg/service"
 	"net/http"
 	"sync"
 )
 
-var syncOnce sync.Once
-
-var httpClient *MCPHTTPClient
+var (
+	syncOnce      sync.Once
+	httpClient    *MCPHTTPClient
+	skipVerifying bool
+)
 
 type MCPHTTPClient struct {
 	httpClient *http.Client
@@ -16,12 +20,16 @@ type MCPHTTPClient struct {
 }
 
 func InitHttpClient() *MCPHTTPClient {
+	skipVerifying = service.GetConfig().Http.Insecure
 	syncOnce.Do(func() {
 		if httpClient == nil {
 			client := http.Client{
 				Transport: &http.Transport{
 					MaxIdleConns:    20,
 					IdleConnTimeout: 45,
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: skipVerifying,
+					},
 				},
 			}
 			httpClient = &MCPHTTPClient{

@@ -2,27 +2,19 @@ package mcp
 
 import (
 	"encoding/json"
-	"fmt"
 	"slices"
 	"strings"
 )
 
 func processSchema(schema string) (*SchemaMapping, error) {
-	var mcpSchema MCPSchema
 	var inputSchema MCPInputSchema
-	err := json.Unmarshal([]byte(schema), &mcpSchema)
+	err := json.Unmarshal([]byte(schema), &inputSchema)
 	if err != nil {
 		logger.Error("Error processing the MCP input schema", "error", err)
 		return nil, err
 	}
-	if mcpSchema.InputSchema != nil {
-		inputSchema = *mcpSchema.InputSchema
-	} else {
-		logger.Error("Input schema is nil")
-		return nil, fmt.Errorf("input schema is nil")
-	}
 
-	schemaMapping := processInputProperties(inputSchema.Properties, mcpSchema.Required)
+	schemaMapping := processInputProperties(inputSchema.Properties, inputSchema.Required)
 	if inputSchema.ContentType != "" {
 		schemaMapping.ContentType = inputSchema.ContentType
 	} else {

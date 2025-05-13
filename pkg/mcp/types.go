@@ -42,18 +42,11 @@ type Param struct {
 	Required bool   `json:"required"`
 }
 
-type MCPSchema struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	InputSchema *MCPInputSchema `json:"inputSchema"`
-	Required    []string        `json:"required"`
-}
-
 type MCPInputSchema struct {
-	Type           string         `json:"type"`
-	Properties     map[string]any `json:"properties"`
-	RequiredFields []string       `json:"requiredFields,omitempty"`
-	ContentType    string         `json:"contentType,omitempty"`
+	Type        string         `json:"type"`
+	Properties  map[string]any `json:"properties"`
+	Required    []string       `json:"required"`
+	ContentType string         `json:"contentType,omitempty"`
 }
 
 type XMLElement struct {

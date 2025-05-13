@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -79,10 +80,17 @@ func serveRequest(c *gin.Context) {
 func main() {
 	router := service.GetRouter()
 	router.POST("/mcp", serveRequest)
-	logger.Info("Service started on localhost:8080...")
-	err := router.Run("0.0.0.0:8080")
+	cfg, err := service.InitConfig()
+	if err != nil {
+		logger.Error("Failed to get configurations", "error", err)
+		return
+	}
+	address := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	logger.Info(fmt.Sprintf("Starting server on %s...", address))
+	err = router.RunTLS(address, cfg.Server.CertPath, cfg.Server.KeyPath)
 	if err != nil {
 		logger.Error("Failed to start the service", "error", err)
+		return
 	}
 
 }
