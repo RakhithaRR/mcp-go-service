@@ -3,6 +3,9 @@ port = 8080
 host = "0.0.0.0"
 keyPath = "resources/security/key.pem"
 certPath = "resources/security/cert.pem"
+secure = true
 
 [http]
 insecure = false
+maxIdleConns = 20
+idleConnTimeout = 60

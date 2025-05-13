@@ -18,10 +18,13 @@ type Server struct {
 	Host     string `mapstructure:"host"`
 	KeyPath  string `mapstructure:"keyPath"`
 	CertPath string `mapstructure:"certPath"`
+	Secure   bool   `mapstructure:"secure"`
 }
 
 type Http struct {
-	Insecure bool `mapstructure:"insecure"`
+	Insecure        bool `mapstructure:"insecure"`
+	MaxIdleConns    int  `mapstructure:"maxIdleConns"`
+	IdleConnTimeout int  `mapstructure:"idleConnTimeout"`
 }
 
 var (

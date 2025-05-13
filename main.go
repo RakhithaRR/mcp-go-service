@@ -87,7 +87,12 @@ func main() {
 	}
 	address := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	logger.Info(fmt.Sprintf("Starting server on %s...", address))
-	err = router.RunTLS(address, cfg.Server.CertPath, cfg.Server.KeyPath)
+	if cfg.Server.Secure {
+		err = router.RunTLS(address, cfg.Server.CertPath, cfg.Server.KeyPath)
+	} else {
+		logger.Warn("Starting server in insecure mode.")
+		err = router.Run(address)
+	}
 	if err != nil {
 		logger.Error("Failed to start the service", "error", err)
 		return

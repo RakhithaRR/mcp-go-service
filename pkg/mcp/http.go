@@ -6,12 +6,15 @@ import (
 	"mcp-server/pkg/service"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
-	syncOnce      sync.Once
-	httpClient    *MCPHTTPClient
-	skipVerifying bool
+	syncOnce        sync.Once
+	httpClient      *MCPHTTPClient
+	skipVerifying   bool
+	maxIdleConns    int
+	idleConnTimeout int
 )
 
 type MCPHTTPClient struct {
@@ -21,12 +24,14 @@ type MCPHTTPClient struct {
 
 func InitHttpClient() *MCPHTTPClient {
 	skipVerifying = service.GetConfig().Http.Insecure
+	maxIdleConns = service.GetConfig().Http.MaxIdleConns
+	idleConnTimeout = service.GetConfig().Http.IdleConnTimeout
 	syncOnce.Do(func() {
 		if httpClient == nil {
 			client := http.Client{
 				Transport: &http.Transport{
-					MaxIdleConns:    20,
-					IdleConnTimeout: 45,
+					MaxIdleConns:    maxIdleConns,
+					IdleConnTimeout: time.Duration(idleConnTimeout) * time.Second,
 					TLSClientConfig: &tls.Config{
 						InsecureSkipVerify: skipVerifying,
 					},

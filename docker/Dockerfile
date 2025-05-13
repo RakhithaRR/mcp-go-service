@@ -1,17 +1,9 @@
-FROM golang:1.23-alpine as builder
-
-WORKDIR /app
-
-COPY . .
-
-RUN go mod download
-
-RUN go build -o /mcp
-
 FROM alpine:3.21
 
-COPY --from=builder /mcp /mcp
+COPY  build/linux/transform-mcp /transform-mcp
+COPY config.toml .
+COPY resources/security /security
 
 EXPOSE 8080
 
-CMD [ "/mcp" ]
+CMD [ "/transform-mcp" ]
