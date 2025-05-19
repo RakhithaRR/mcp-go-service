@@ -14,7 +14,7 @@ func getHealth(c *gin.Context) {
 }
 
 func GetRouter() *gin.Engine {
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.GET("/health", getHealth)
 	return router
