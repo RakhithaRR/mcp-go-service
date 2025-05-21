@@ -12,6 +12,7 @@ type TestParam struct {
 	schema      *SchemaMapping
 	wantQuery   string
 	wantHeaders map[string]string
+	wantPath    string
 	wantErr     bool
 }
 
@@ -212,6 +213,67 @@ func TestProcessHeaderParameters(t *testing.T) {
 				gotJSON, _ := json.Marshal(got)
 				wantJSON, _ := json.Marshal(tt.wantHeaders)
 				t.Errorf("processHeaderParameters() = %s, want %s", gotJSON, wantJSON)
+			}
+		})
+	}
+}
+
+func TestProcessPathParameters(t *testing.T) {
+	baseUrl := "https://test.com/{foo}/test/{baz}"
+	tests := []TestParam{
+		{
+			name: "all required present",
+			mcpRequest: &MCPRequest{
+				Arguments: `{"foo":"bar","baz":"qux"}`,
+			},
+			schema: &SchemaMapping{
+				PathParameters: []string{
+					"foo", "baz",
+				},
+			},
+			wantPath: "https://test.com/bar/test/qux",
+			wantErr:  false,
+		},
+		{
+			name: "missing required",
+			mcpRequest: &MCPRequest{
+				Arguments: `{"foo":"bar"}`,
+			},
+			schema: &SchemaMapping{
+				PathParameters: []string{
+					"foo", "baz",
+				},
+			},
+			wantPath: "",
+			wantErr:  true,
+		},
+		{
+			name: "no path params",
+			mcpRequest: &MCPRequest{
+				Arguments: `{}`,
+			},
+			schema: &SchemaMapping{
+				PathParameters: []string{},
+			},
+			wantPath: "https://test.com/{foo}/test/{baz}",
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args, err := parseArgs(tt.mcpRequest)
+			if err != nil {
+				t.Errorf("parseArgs() error = %v", err)
+				return
+			}
+			got, err := processPathParameters(args, tt.schema, baseUrl)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("processPathParameters() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.wantPath {
+				t.Errorf("processPathParameters() error = %v, want %v", err, tt.wantPath)
 			}
 		})
 	}
