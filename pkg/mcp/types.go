@@ -6,10 +6,12 @@ import (
 )
 
 type MCPRequest struct {
-	ToolName  string  `json:"tool_name"`
-	API       APIInfo `json:"api"`
-	Arguments string  `json:"arguments,omitempty"`
-	Schema    string  `json:"schema,omitempty"`
+	ToolName  string      `json:"tool_name"`
+	Arguments string      `json:"arguments,omitempty"`
+	Schema    string      `json:"schema,omitempty"`
+	API       APIInfo     `json:"api"`
+	Backend   BackendInfo `json:"backend,omitempty"`
+	IsProxy   bool        `json:"is_proxy,omitempty"`
 }
 
 type APIInfo struct {
@@ -20,6 +22,12 @@ type APIInfo struct {
 	Path     string `json:"path"`
 	Verb     string `json:"verb"`
 	Auth     string `json:"auth,omitempty"`
+}
+
+type BackendInfo struct {
+	Endpoint string `json:"endpoint"`
+	Target   string `json:"target"`
+	Verb     string `json:"verb"`
 }
 
 type TransformedRequest struct {
